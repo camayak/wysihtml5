@@ -1,5 +1,5 @@
 /**
- * @license wysihtml5 v0.3.0
+ * @license wysihtml5 v0.3.1-camayak
  * https://github.com/xing/wysihtml5
  *
  * Author: Christopher Blum (https://github.com/tiff)
@@ -9,7 +9,7 @@
  *
  */
 var wysihtml5 = {
-  version: "0.3.0",
+  version: "0.3.1-camayak",
   
   // namespaces
   commands:   {},

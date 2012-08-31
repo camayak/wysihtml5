@@ -6108,9 +6108,9 @@ wysihtml5.quirks.cleanPastedHTML = (function() {
       }
 
       newRange = rangy.createRange(this.doc);
-      try { newRange.setStart(rangeBackup.startContainer, rangeBackup.startOffset); } catch(e1) {}
-      try { newRange.setEnd(rangeBackup.endContainer, rangeBackup.endOffset); } catch(e2) {}
-      try { this.setSelection(newRange); } catch(e3) {}
+      try { newRange.setStart(rangeBackup.startContainer, rangeBackup.startOffset); } catch(e1) {console.log(e1)}
+      try { newRange.setEnd(rangeBackup.endContainer, rangeBackup.endOffset); } catch(e2) {console.log(e2)}
+      try { this.setSelection(newRange); } catch(e3) {console.log(e3)}
     },
 
     /**
