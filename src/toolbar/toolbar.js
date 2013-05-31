@@ -94,6 +94,13 @@
           that.editor.fire("save:dialog", { command: command, dialogContainer: dialogElement, commandLink: link });
         });
 
+        dialog.observe("edit", function(attributes) {
+          if (caretBookmark) {
+            that.composer.selection.setBookmark(caretBookmark);
+          }
+          that.editor.fire("update:dialog", { command: command, dialogContainer: dialogElement, commandLink: link });
+        });
+
         dialog.observe("cancel", function() {
           that.editor.focus(false);
           that.editor.fire("cancel:dialog", { command: command, dialogContainer: dialogElement, commandLink: link });
