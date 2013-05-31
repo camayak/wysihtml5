@@ -103,12 +103,12 @@
     },
 
     isEmpty: function() {
-      var innerHTML               = this.element.innerHTML,
-          elementsWithVisualValue = "blockquote, ul, ol, img, embed, object, table, iframe, svg, video, audio, button, input, select, textarea";
-      return innerHTML === ""              || 
-             innerHTML === this.CARET_HACK ||
-             this.hasPlaceholderSet()      ||
-             (this.getTextContent() === "" && !this.element.querySelector(elementsWithVisualValue));
+      var innerHTML = this.element.innerHTML.toLowerCase();
+      return innerHTML === ""            ||
+             innerHTML === "<br>"        ||
+             innerHTML === "<p></p>"     ||
+             innerHTML === "<p><br></p>" ||
+             this.hasPlaceholderSet();
     },
 
     _initSandbox: function() {
@@ -141,32 +141,33 @@
       this.element            = this.doc.body;
       this.textarea           = this.parent.textarea;
       this.element.innerHTML  = this.textarea.getValue(true);
-      this.enable();
       
       // Make sure our selection handler is ready
       this.selection = new wysihtml5.Selection(this.parent);
       
       // Make sure commands dispatcher is ready
       this.commands  = new wysihtml5.Commands(this.parent);
-
+      
       dom.copyAttributes([
         "className", "spellcheck", "title", "lang", "dir", "accessKey"
       ]).from(this.textarea.element).to(this.element);
       
       dom.addClass(this.element, this.config.composerClassName);
-
-      // Make the editor look like the original textarea, by syncing styles
+      // 
+      // // Make the editor look like the original textarea, by syncing styles
       if (this.config.style) {
         this.style();
       }
-
+      
       this.observe();
-
+      
       var name = this.config.name;
       if (name) {
         dom.addClass(this.element, name);
         dom.addClass(this.iframe, name);
       }
+      
+      this.enable();
       
       if (this.textarea.element.disabled) {
         this.disable();
@@ -182,36 +183,31 @@
       
       // Make sure that the browser avoids using inline styles whenever possible
       this.commands.exec("styleWithCSS", false);
-
+      
       this._initAutoLinking();
       this._initObjectResizing();
       this._initUndoManager();
-
+      this._initLineBreaking();
+      
       // Simulate html5 autofocus on contentEditable element
       // This doesn't work on IOS (5.1.1)
       if ((this.textarea.element.hasAttribute("autofocus") || document.querySelector(":focus") == this.textarea.element) && !browser.isIos()) {
         setTimeout(function() { that.focus(true); }, 100);
       }
-
-      wysihtml5.quirks.insertLineBreakOnReturn(this);
-
+      
       // IE sometimes leaves a single paragraph, which can't be removed by the user
       if (!browser.clearsContentEditableCorrectly()) {
         wysihtml5.quirks.ensureProperClearing(this);
       }
-
-      if (!browser.clearsListsInContentEditableCorrectly()) {
-        wysihtml5.quirks.ensureProperClearingOfLists(this);
-      }
-
+      
       // Set up a sync that makes sure that textarea and editor have the same content
       if (this.initSync && this.config.sync) {
         this.initSync();
       }
-
+      
       // Okay hide the textarea, we are ready to go
       this.textarea.hide();
-
+      
       // Fire global (before-)load event
       this.parent.fire("beforeload").fire("load");
     },
@@ -231,10 +227,12 @@
       // Only do the auto linking by ourselves when the browser doesn't support auto linking
       // OR when he supports auto linking but we were able to turn it off (IE9+)
       if (!supportsAutoLinking || (supportsAutoLinking && supportsDisablingOfAutoLinking)) {
-        this.parent.observe("newword:composer", function() {
-          that.selection.executeAndRestore(function(startContainer, endContainer) {
-            dom.autoLink(endContainer.parentNode);
-          });
+        this.parent.on("newword:composer", function() {
+          if (dom.getTextContent(that.element).match(dom.autoLink.URL_REG_EXP)) {
+            that.selection.executeAndRestore(function(startContainer, endContainer) {
+              dom.autoLink(endContainer.parentNode);
+            });
+          }
         });
         
         dom.observe(this.element, "blur", function() {
@@ -289,45 +287,121 @@
     },
 
     _initObjectResizing: function() {
-      var properties        = ["width", "height"],
-          propertiesLength  = properties.length,
-          element           = this.element,
-          adoptStyles       = function(event) {
-            var target = event.target || event.srcElement,
-                style  = target.style,
-                i      = 0,
-                property;
-            
-            if (target.nodeName !== "IMG") {
-              return;
-            }
-            
-            for (; i<propertiesLength; i++) {
-              property = properties[i];
-              if (style[property]) {
-                target.setAttribute(property, parseInt(style[property], 10));
-                style[property] = "";
-              }
-            }
-            
-            // After resizing IE sometimes forgets to remove the old resize handles
-            wysihtml5.quirks.redraw(element);
-          };
-      
       this.commands.exec("enableObjectResizing", true);
       
       // IE sets inline styles after resizing objects
       // The following lines make sure that the width/height css properties
       // are copied over to the width/height attributes
       if (browser.supportsEvent("resizeend")) {
-        dom.observe(element, "resizeend", adoptStyles);
-      } else {
-        dom.observe(element, "DOMAttrModified", adoptStyles);
+        var properties        = ["width", "height"],
+            propertiesLength  = properties.length,
+            element           = this.element;
+        
+        dom.observe(element, "resizeend", function(event) {
+          var target = event.target || event.srcElement,
+              style  = target.style,
+              i      = 0,
+              property;
+          
+          if (target.nodeName !== "IMG") {
+            return;
+          }
+          
+          for (; i<propertiesLength; i++) {
+            property = properties[i];
+            if (style[property]) {
+              target.setAttribute(property, parseInt(style[property], 10));
+              style[property] = "";
+            }
+          }
+          
+          // After resizing IE sometimes forgets to remove the old resize handles
+          wysihtml5.quirks.redraw(element);
+        });
       }
     },
     
     _initUndoManager: function() {
       this.undoManager = new wysihtml5.UndoManager(this.parent);
+    },
+    
+    _initLineBreaking: function() {
+      var that                              = this,
+          USE_NATIVE_LINE_BREAK_INSIDE_TAGS = ["LI", "P", "H1", "H2", "H3", "H4", "H5", "H6"],
+          LIST_TAGS                         = ["UL", "OL", "MENU"];
+      
+      function adjust(selectedNode) {
+        var parentElement = dom.getParentElement(selectedNode, { nodeName: ["P", "DIV"] }, 2);
+        if (parentElement) {
+          that.selection.executeAndRestore(function() {
+            if (that.config.useLineBreaks) {
+              dom.replaceWithChildNodes(parentElement);
+            } else if (parentElement.nodeName !== "P") {
+              dom.renameElement(parentElement, "p");
+            }
+          });
+        }
+      }
+      
+      if (!this.config.useLineBreaks) {
+        dom.observe(this.element, ["focus", "keydown"], function() {
+          if (that.isEmpty()) {
+            var paragraph = that.doc.createElement("P");
+            that.element.innerHTML = "";
+            that.element.appendChild(paragraph);
+            if (!browser.displaysCaretInEmptyContentEditableCorrectly()) {
+              paragraph.innerHTML = "<br>";
+              that.selection.setBefore(paragraph.firstChild);
+            } else {
+              that.selection.selectNode(paragraph, true);
+            }
+          }
+        });
+      }
+      
+      dom.observe(this.doc, "keydown", function(event) {
+        var keyCode = event.keyCode;
+        
+        if (event.shiftKey) {
+          return;
+        }
+        
+        if (keyCode !== wysihtml5.ENTER_KEY && keyCode !== wysihtml5.BACKSPACE_KEY) {
+          return;
+        }
+        
+        var blockElement = dom.getParentElement(that.selection.getSelectedNode(), { nodeName: USE_NATIVE_LINE_BREAK_INSIDE_TAGS }, 4);
+        if (blockElement) {
+          setTimeout(function() {
+            // Unwrap paragraph after leaving a list or a H1-6
+            var selectedNode = that.selection.getSelectedNode(),
+                isHeadline,
+                list;
+            
+            if (blockElement.nodeName === "LI") {
+              if (!selectedNode) {
+                return;
+              }
+
+              list = dom.getParentElement(selectedNode, { nodeName: LIST_TAGS }, 2);
+
+              if (!list) {
+                adjust(selectedNode);
+              }
+            }
+
+            if (keyCode === wysihtml5.ENTER_KEY && blockElement.nodeName.match(/^H[1-6]$/)) {
+              adjust(selectedNode);
+            }
+          }, 0);
+          return;
+        }
+        
+        if (that.config.useLineBreaks && keyCode === wysihtml5.ENTER_KEY && !wysihtml5.browser.insertsLineBreaksOnReturn()) {
+          that.commands.exec("insertLineBreak");
+          event.preventDefault();
+        }
+      });
     }
   });
 })(wysihtml5);
