@@ -291,12 +291,11 @@
           ancestorWithClass = splitNodeAt(ancestorWithClass, range.startContainer, range.startOffset);
         }
       }
-      
-      if (this.similarClassRegExp) {
-        removeClass(ancestorWithClass, this.similarClassRegExp);
-      }
       if (this.isRemovable(ancestorWithClass)) {
         replaceWithOwnChildren(ancestorWithClass);
+      }      
+      if (this.similarClassRegExp) {
+        removeClass(ancestorWithClass, this.similarClassRegExp);
       }
     },
 
