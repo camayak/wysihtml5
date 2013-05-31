@@ -46,6 +46,7 @@ JS_FILES = src/wysihtml5.js \
   src/selection/html_applier.js \
   src/commands.js \
   src/commands/bold.js \
+  src/commands/comment.js \
   src/commands/createLink.js \
   src/commands/fontSize.js \
   src/commands/foreColor.js \
@@ -54,6 +55,7 @@ JS_FILES = src/wysihtml5.js \
   src/commands/insertHTML.js \
   src/commands/insertImage.js \
   src/commands/insertLineBreak.js \
+  src/commands/insertOEmbed.js \
   src/commands/insertOrderedList.js \
   src/commands/insertUnorderedList.js \
   src/commands/italic.js \
