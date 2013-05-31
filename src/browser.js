@@ -41,7 +41,6 @@ wysihtml5.browser = (function() {
           hasQuerySelectorSupport     = document.querySelector && document.querySelectorAll,
           // contentEditable is unusable in mobile browsers (tested iOS 4.2.2, Android 2.2, Opera Mobile, WebOS 3.05)
           isIncompatibleMobileBrowser = (this.isIos() && iosVersion(userAgent) < 5) || (this.isAndroid() && androidVersion(userAgent) < 4) || userAgent.indexOf("opera mobi") !== -1 || userAgent.indexOf("hpwos/") !== -1;
-      
       return hasContentEditableSupport
         && hasEditingApiSupport
         && hasQuerySelectorSupport
@@ -53,8 +52,7 @@ wysihtml5.browser = (function() {
     },
     
     isIos: function() {
-      var userAgent = this.USER_AGENT.toLowerCase();
-      return userAgent.indexOf("webkit") !== -1 && userAgent.indexOf("mobile") !== -1;
+      return (/ipad|iphone|ipod/i).test(this.USER_AGENT);
     },
     
     isAndroid: function() {
@@ -104,7 +102,7 @@ wysihtml5.browser = (function() {
      * Firefox on OSX navigates through history when hitting CMD + Arrow right/left
      */
     hasHistoryIssue: function() {
-      return isGecko;
+      return isGecko && navigator.platform.substr(0, 3) === "Mac";
     },
 
     /**
@@ -344,6 +342,18 @@ wysihtml5.browser = (function() {
      */
     hasIframeFocusIssue: function() {
       return isIE;
+    },
+    
+    /**
+     * Chrome + Safari create invalid nested markup after paste
+     * 
+     *  <p>
+     *    foo
+     *    <p>bar</p> <!-- BOO! -->
+     *  </p>
+     */
+    createsNestedInvalidMarkupAfterPaste: function() {
+      return isWebKit;
     }
   };
 })();

@@ -26,11 +26,6 @@
         value = this.parent.parse(value);
       }
 
-      // Replace all "zero width no breaking space" chars
-      // which are used as hacks to enable some functionalities
-      // Also remove all CARET hacks that somehow got left
-      value = wysihtml5.lang.string(value).replace(wysihtml5.INVISIBLE_SPACE).by("");
-
       return value;
     },
 
@@ -359,8 +354,23 @@
         });
       }
       
+      // Under certain circumstances Chrome + Safari create nested <p> or <hX> tags after paste
+      // Inserting an invisible white space in front of it fixes the issue
+      if (browser.createsNestedInvalidMarkupAfterPaste()) {
+        dom.observe(this.element, "paste", function(event) {
+          var invisibleSpace = that.doc.createTextNode(wysihtml5.INVISIBLE_SPACE);
+          that.selection.insertNode(invisibleSpace);
+        });
+      }
+
+      
       dom.observe(this.doc, "keydown", function(event) {
-        var keyCode = event.keyCode;
+        var keyCode       = event.keyCode,
+            blockElement  = dom.getParentElement(that.selection.getSelectedNode(), { nodeName: USE_NATIVE_LINE_BREAK_INSIDE_TAGS }, 4);
+
+        if (!blockElement && !that.config.useLineBreaks && keyCode === wysihtml5.ENTER_KEY) {
+          that.commands.exec("formatBlock", "p");
+        }
         
         if (event.shiftKey) {
           return;
@@ -370,12 +380,10 @@
           return;
         }
         
-        var blockElement = dom.getParentElement(that.selection.getSelectedNode(), { nodeName: USE_NATIVE_LINE_BREAK_INSIDE_TAGS }, 4);
         if (blockElement) {
           setTimeout(function() {
             // Unwrap paragraph after leaving a list or a H1-6
             var selectedNode = that.selection.getSelectedNode(),
-                isHeadline,
                 list;
             
             if (blockElement.nodeName === "LI") {
@@ -394,10 +402,7 @@
               adjust(selectedNode);
             }
           }, 0);
-          return;
-        }
-        
-        if (that.config.useLineBreaks && keyCode === wysihtml5.ENTER_KEY && !wysihtml5.browser.insertsLineBreaksOnReturn()) {
+        } else if (that.config.useLineBreaks && keyCode === wysihtml5.ENTER_KEY && !wysihtml5.browser.insertsLineBreaksOnReturn()) {
           that.commands.exec("insertLineBreak");
           event.preventDefault();
         }

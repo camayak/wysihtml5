@@ -85,6 +85,10 @@
           that.editor.fire("show:dialog", { command: command, dialogContainer: dialogElement, commandLink: link });
         });
 
+        dialog.on("hide", function() {
+          that.editor.fire("hide:dialog", { command: command, dialogContainer: dialogElement, commandLink: link });
+        });
+
         dialog.on("save", function(attributes) {
           if (caretBookmark) {
             that.composer.selection.setBookmark(caretBookmark);
@@ -94,18 +98,14 @@
           that.editor.fire("save:dialog", { command: command, dialogContainer: dialogElement, commandLink: link });
         });
 
-<<<<<<< HEAD
-        dialog.observe("edit", function(attributes) {
+        dialog.on("edit", function(attributes) {
           if (caretBookmark) {
             that.composer.selection.setBookmark(caretBookmark);
           }
           that.editor.fire("update:dialog", { command: command, dialogContainer: dialogElement, commandLink: link });
         });
 
-        dialog.observe("cancel", function() {
-=======
         dialog.on("cancel", function() {
->>>>>>> ddb93d506567fdfee775eb4772148b075650fed8
           that.editor.focus(false);
           that.editor.fire("cancel:dialog", { command: command, dialogContainer: dialogElement, commandLink: link });
         });
@@ -144,14 +144,12 @@
 
     execAction: function(action) {
       var editor = this.editor;
-      switch(action) {
-        case "change_view":
-          if (editor.currentView === editor.textarea) {
-            editor.fire("change_view", "composer");
-          } else {
-            editor.fire("change_view", "textarea");
-          }
-          break;
+      if (action === "change_view") {
+        if (editor.currentView === editor.textarea) {
+          editor.fire("change_view", "composer");
+        } else {
+          editor.fire("change_view", "textarea");
+        }
       }
     },
 
@@ -166,10 +164,14 @@
       for (; i<length; i++) {
         // 'javascript:;' and unselectable=on Needed for IE, but done in all browsers to make sure that all get the same css applied
         // (you know, a:link { ... } doesn't match anchors with missing href attribute)
-        dom.setAttributes({
-          href:         "javascript:;",
-          unselectable: "on"
-        }).on(links[i]);
+        if (links[i].nodeName === "A") {
+          dom.setAttributes({
+            href:         "javascript:;",
+            unselectable: "on"
+          }).on(links[i]);
+        } else {
+          dom.setAttributes({ unselectable: "on" }).on(links[i]);
+        }
       }
 
       // Needed for opera and chrome

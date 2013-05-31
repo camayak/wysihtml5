@@ -61,7 +61,7 @@
             event.stopPropagation();
           };
 
-      dom.observe(that.link, "click", function(event) {
+      dom.observe(that.link, "click", function() {
         if (dom.hasClass(that.link, CLASS_NAME_OPENED)) {
           setTimeout(function() { that.hide(); }, 0);
         }
@@ -73,6 +73,7 @@
           callbackWrapper(event);
         }
         if (keyCode === wysihtml5.ESCAPE_KEY) {
+          that.fire("cancel");
           that.hide();
         }
       });
@@ -162,8 +163,13 @@
      * Show the dialog element
      */
     show: function(elementToChange) {
-      if (dom.hasClass(this.link, CLASS_NAME_OPENED)) {
-        return;
+      if (this.opened) {
+        if (this.elementToChange == elementToChange) {
+          return;
+        }
+        else {
+          this.hide();
+        }
       }
       
       var that        = this,
@@ -175,6 +181,7 @@
         this.interval = setInterval(function() { that._interpolate(true); }, 500);
       }
       dom.addClass(this.link, CLASS_NAME_OPENED);
+      this.opened = true;
       this.container.style.display = "";
       this.fire("show");
       if (firstField && !elementToChange) {
@@ -188,9 +195,14 @@
      * Hide the dialog element
      */
     hide: function() {
+      if (!this.opened) {
+        return;
+      }
+
       clearInterval(this.interval);
       this.elementToChange = null;
       dom.removeClass(this.link, CLASS_NAME_OPENED);
+      this.opened = false;
       this.container.style.display = "none";
       this.fire("hide");
     }
