@@ -132,7 +132,7 @@ wysihtml5.dom.parse = (function() {
     // Cleanup senseless <span> elements
     if (cleanUp &&
         newNode.nodeName.toLowerCase() === DEFAULT_NODE_NAME &&
-        (!newNode.childNodes.length || !newNode.attributes.length)) {
+        (!newNode.childNodes.length && !newNode.attributes.length)) {
       fragment = newNode.ownerDocument.createDocumentFragment();
       while (newNode.firstChild) {
         fragment.appendChild(newNode.firstChild);
