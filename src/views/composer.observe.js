@@ -15,6 +15,7 @@
       shortcuts = {
         "66": "bold",     // B
         "73": "italic",   // I
+        "77": "comment",  // Inline Comment
         "85": "underline" // U
       };
   
@@ -135,20 +136,37 @@
 
     // --------- Make sure that when pressing backspace/delete on selected images deletes the image and it's anchor ---------
     dom.observe(element, "keydown", function(event) {
-      var target  = that.selection.getSelectedNode(true),
-          keyCode = event.keyCode,
+      var range         = that.selection.getRange(),
+          target        = that.selection.getSelectedNode(true),
+          keyCode       = event.keyCode,
+          elementToDelete,
           parent;
-      if (target && target.nodeName === "IMG" && (keyCode === wysihtml5.BACKSPACE_KEY || keyCode === wysihtml5.DELETE_KEY)) { // 8 => backspace, 46 => delete
-        parent = target.parentNode;
-        // delete the <img>
-        parent.removeChild(target);
-        // and it's parent <a> too if it hasn't got any other child nodes
-        if (parent.nodeName === "A" && !parent.firstChild) {
-          parent.parentNode.removeChild(parent);
+      if (keyCode === wysihtml5.BACKSPACE_KEY || keyCode === wysihtml5.DELETE_KEY) { // 8 => backspace, 46 => delete
+        if (target && target.nodeName === "IMG") {
+          parent = target.parentNode;
+          // delete the <img>
+          parent.removeChild(target);
+          // and it's parent <a> too if it hasn't got any other child nodes
+          if (parent.nodeName === "A" && !parent.firstChild) {
+            parent.parentNode.removeChild(parent);
+          }
+          event.preventDefault();
+        } else if (range.collapsed && (target.nodeType === wysihtml5.TEXT_NODE || target === this)) {
+          // --------- Handle backspace/delete over inline comment
+          if (range.startOffset === 0 && keyCode === wysihtml5.BACKSPACE_KEY) {
+            elementToDelete = target.previousSibling;
+          } else if (range.startOffset === target.length && keyCode === wysihtml5.DELETE_KEY) {
+            elementToDelete = target.nextSibling;
+          } else if (target === this) {
+            elementToDelete = range.commonAncestorContainer.childNodes[range.startOffset-1];
+          }
+          if (elementToDelete && elementToDelete.nodeName === "Q") {
+            parent = elementToDelete.parentNode;
+            parent.removeChild(elementToDelete);
+            setTimeout(function() { wysihtml5.quirks.redraw(element); }, 0);
+            event.preventDefault();
+          }
         }
-
-        setTimeout(function() { wysihtml5.quirks.redraw(element); }, 0);
-        event.preventDefault();
       }
     });
     

@@ -366,7 +366,14 @@
       
       dom.observe(this.doc, "keydown", function(event) {
         var keyCode       = event.keyCode,
-            blockElement  = dom.getParentElement(that.selection.getSelectedNode(), { nodeName: USE_NATIVE_LINE_BREAK_INSIDE_TAGS }, 4);
+            blockElement  = dom.getParentElement(that.selection.getSelectedNode(), { nodeName: USE_NATIVE_LINE_BREAK_INSIDE_TAGS }, 4),
+            inlineComment = dom.getParentElement(that.selection.getSelectedNode(), { nodeName: "Q"}, 4);
+
+        // If we're in an inline comment, don't allow enter.
+        if (inlineComment && keyCode === wysihtml5.ENTER_KEY) {
+          event.preventDefault();
+          return false;
+        }
 
         if (!blockElement && !that.config.useLineBreaks && keyCode === wysihtml5.ENTER_KEY) {
           that.commands.exec("formatBlock", "p");
