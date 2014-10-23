@@ -10,8 +10,8 @@
       MAX_HISTORY_ENTRIES = 25,
       DATA_ATTR_NODE      = "data-wysihtml5-selection-node",
       DATA_ATTR_OFFSET    = "data-wysihtml5-selection-offset",
-      UNDO_HTML           = '<span id="_wysihtml5-undo" class="_wysihtml5-temp">' + wysihtml5.INVISIBLE_SPACE + '</span>',
-      REDO_HTML           = '<span id="_wysihtml5-redo" class="_wysihtml5-temp">' + wysihtml5.INVISIBLE_SPACE + '</span>',
+      UNDO_HTML           = '<span id="_wysihtml5-undo" class="_wysihtml5-temp"></span>',
+      REDO_HTML           = '<span id="_wysihtml5-redo" class="_wysihtml5-temp"></span>',
       dom                 = wysihtml5.dom;
   
   function cleanTempElements(doc) {
