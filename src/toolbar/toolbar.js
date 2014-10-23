@@ -195,10 +195,16 @@
         that.bookmark = null;
         clearInterval(that.interval);
         that.interval = setInterval(function() { that._updateLinkStates(); }, 500);
+        // Enable Toolbar
+        that.commandsDisabled = false;
+        dom.removeClass(container, CLASS_NAME_COMMANDS_DISABLED);
       });
 
       editor.on("blur:composer", function() {
         clearInterval(that.interval);
+        // Disable toolbar
+        that.commandsDisabled = true;
+        dom.addClass(container, CLASS_NAME_COMMANDS_DISABLED);
       });
 
       editor.on("destroy:composer", function() {
