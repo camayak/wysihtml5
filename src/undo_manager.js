@@ -246,6 +246,13 @@
         }
       }
     },
+
+    // Clears the undo history
+    clear: function() {
+      this.position = 0;
+      this.historyStr = [];
+      this.historyDom = [];
+    },
     
     getChildNodeByIndex: function(parent, index) {
       return parent.childNodes[index];
