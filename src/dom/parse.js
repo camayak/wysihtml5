@@ -216,6 +216,7 @@ wysihtml5.dom.parse = (function() {
         checkAttributes     = rule.check_attributes,      // check/convert values of attributes
         allowedClasses      = currentRules.classes,
         i                   = 0,
+        j                   = 0,
         classes             = [],
         newClasses          = [],
         newUniqueClasses    = [],
@@ -236,9 +237,23 @@ wysihtml5.dom.parse = (function() {
       allowAttributesLength = allowAttributes.length;
       for (i = 0; i<allowAttributesLength; i++) {
         attributeName = allowAttributes[i];
-        newAttributeValue = _getAttribute(oldNode, attributeName);
-        if (typeof(newAttributeValue) === "string") {
-          attributes[attributeName] = newAttributeValue;
+        if (typeof(attributeName) === "string") {
+          newAttributeValue = _getAttribute(oldNode, attributeName);
+          if (typeof(newAttributeValue) === "string") {
+            attributes[attributeName] = newAttributeValue;
+          }
+        } else if (attributeName instanceof RegExp) {
+          var attrs = oldNode.attributes;
+          var attrLength = attrs.length;
+          for (j=0; j<attrLength; j++) {
+            var attrName = attrs[j].name
+            if (attributeName.test(attrName)) {
+              newAttributeValue = _getAttribute(oldNode, attrName);
+              if (typeof(newAttributeValue) === "string") {
+                attributes[attrName] = newAttributeValue;
+              }
+            }
+          }
         }
       }
     }
