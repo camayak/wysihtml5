@@ -14,6 +14,7 @@
        */
       shortcuts = {
         "66": "bold",     // B
+        "68": "del",       // del
         "73": "italic",   // I
         "77": "comment",  // Inline Comment
         "85": "underline" // U
