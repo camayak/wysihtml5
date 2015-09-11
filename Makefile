@@ -50,6 +50,7 @@ JS_FILES = src/wysihtml5.js \
   src/commands/fontSize.js \
   src/commands/foreColor.js \
   src/commands/formatBlock.js \
+  src/commands/formatHeading.js \
   src/commands/formatInline.js \
   src/commands/insertHTML.js \
   src/commands/insertImage.js \
