@@ -158,7 +158,7 @@
       nodeName = typeof(nodeName) === "string" ? nodeName.toUpperCase() : nodeName;
       
       if (blockElement) {
-        composer.selection.executeAndRestoreSimple(function() {
+        composer.selection.executeAndRestore(function() {
           if (classRegExp) {
             _removeClass(blockElement, classRegExp);
           }
