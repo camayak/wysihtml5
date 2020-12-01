@@ -271,7 +271,7 @@
           if (command.group) {
             dom.addClass(command.group, CLASS_NAME_COMMAND_ACTIVE);
           }
-          if (command.dialog && config.autoOpenDialogs) {
+          if (command.dialog && ( config.autoOpenDialogs || command.dialog.container.dataset['wysihtml5Autopen'] === "true" ) ) {
             if (typeof(state) === "object") {
               command.dialog.show(state);
             } else {
